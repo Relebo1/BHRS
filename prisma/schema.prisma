@@ -1,0 +1,71 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider     = "mysql"
+  url          = env("DATABASE_URL")
+  relationMode = "prisma"
+}
+
+model User {
+  id             Int             @id @default(autoincrement())
+  name           String
+  email          String          @unique
+  password       String
+  role           String          @default("nurse")
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  medicalRecords MedicalRecord[]
+
+  @@map("users")
+}
+
+model Patient {
+  id             Int             @id @default(autoincrement())
+  studentId      String          @unique @map("student_id")
+  firstName      String          @map("first_name")
+  lastName       String          @map("last_name")
+  gender         String
+  dateOfBirth    DateTime        @map("date_of_birth")
+  phone          String
+  address        String          @db.Text
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  medicalRecords MedicalRecord[]
+  appointments   Appointment[]
+
+  @@map("patients")
+}
+
+model MedicalRecord {
+  id           Int      @id @default(autoincrement())
+  patientId    Int      @map("patient_id")
+  diagnosis    String   @db.Text
+  treatment    String   @db.Text
+  prescription String   @db.Text
+  visitDate    DateTime @map("visit_date")
+  doctorId     Int      @map("doctor_id")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  patient      Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  doctor       User     @relation(fields: [doctorId], references: [id])
+
+  @@index([patientId])
+  @@index([doctorId])
+  @@map("medical_records")
+}
+
+model Appointment {
+  id              Int      @id @default(autoincrement())
+  patientId       Int      @map("patient_id")
+  appointmentDate DateTime @map("appointment_date")
+  status          String   @default("scheduled")
+  notes           String?  @db.Text
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  patient         Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  @@index([patientId])
+  @@map("appointments")
+}
