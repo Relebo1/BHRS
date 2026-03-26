@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
       },
     })
 
-    const notifications = []
+    const notifications: { id: string; type: string; title: string; message: string; time: Date }[] = []
 
     todayAppointments.forEach((apt) => {
       notifications.push({
