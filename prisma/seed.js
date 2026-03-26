@@ -23,11 +23,11 @@ async function main() {
   // Create doctor
   const doctorPassword = await bcrypt.hash('doctor123', 10)
   const doctor = await prisma.user.upsert({
-    where: { email: 'sekutlu@botho.ac.bw' },
+    where: { email: 'doctor@botho.ac.bw' },
     update: {},
     create: {
       name: 'Dr. Relebohile Sekutlu',
-      email: 'sekutlu@botho.ac.bw',
+      email: 'doctor@botho.ac.bw',
       password: doctorPassword,
       role: 'doctor',
     },
