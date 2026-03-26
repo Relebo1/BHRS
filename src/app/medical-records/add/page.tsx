@@ -1,13 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import DashboardLayout from '@/components/DashboardLayout'
 import Link from 'next/link'
 import { useAuth } from '@/hooks/useAuth'
 import { ArrowLeftIcon } from '@heroicons/react/24/outline'
 
-export default function AddMedicalRecordPage() {
+function AddMedicalRecordForm() {
   const { user, loading: authLoading } = useAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -116,5 +116,13 @@ export default function AddMedicalRecordPage() {
         </div>
       </div>
     </DashboardLayout>
+  )
+}
+
+export default function AddMedicalRecordPage() {
+  return (
+    <Suspense>
+      <AddMedicalRecordForm />
+    </Suspense>
   )
 }
