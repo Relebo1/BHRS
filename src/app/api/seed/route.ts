@@ -1,11 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
+import { execSync } from 'child_process'
 
 export async function POST(request: NextRequest) {
   const secret = request.headers.get('x-seed-secret')
   if (secret !== process.env.SEED_SECRET) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  try {
+    execSync('npx prisma db push --accept-data-loss', { stdio: 'inherit' })
+  } catch (e) {
+    return NextResponse.json({ error: 'Schema push failed' }, { status: 500 })
   }
 
   const users = [
