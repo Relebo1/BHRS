@@ -20,13 +20,13 @@ async function seedUsers(client: PrismaClient) {
         data: { name: u.name, email: u.email, password: hashed, role: u.role }
       })
       seeded++
-      console.log(`   👤 ${u.name} (${u.role}) — ${u.email} / ${u.password}`)
+      console.log(`   [USER] ${u.name} (${u.role}) — ${u.email} / ${u.password}`)
     }
   }
   if (seeded > 0) {
-    console.log(`✅ ${seeded} default user(s) created.\n`)
+    console.log(`[SUCCESS] ${seeded} default user(s) created.\n`)
   } else {
-    console.log('👥 Default users already exist — skipping.\n')
+    console.log('[INFO] Default users already exist — skipping.\n')
   }
 }
 
@@ -34,14 +34,14 @@ async function pushSchema(client: PrismaClient) {
   // In production (Vercel), schema is pushed at build time via postinstall.
   // In development, push schema via CLI before running dev server.
   if (process.env.NODE_ENV === 'production') {
-    console.log('\n🔌 Connecting to TiDB Cloud...')
+    console.log('\n[CONN] Connecting to TiDB Cloud...')
     try {
       await client.$connect()
-      console.log('✅ Database connected successfully.\n')
-      console.log('🌱 Checking default users...')
+      console.log('[SUCCESS] Database connected successfully.\n')
+      console.log('[SEED] Checking default users...')
       await seedUsers(client)
     } catch (e: any) {
-      console.error('❌ Database connection failed:', e.message)
+      console.error('[ERROR] Database connection failed:', e.message)
     }
     return
   }
@@ -49,36 +49,36 @@ async function pushSchema(client: PrismaClient) {
   // Development: run db push via CLI
   const { execSync } = await import('child_process')
   try {
-    console.log('\n🔌 Connecting to database...')
+    console.log('\n[CONN] Connecting to database...')
     const output = execSync('npx prisma db push --skip-generate --accept-data-loss 2>&1', {
       env: process.env,
     }).toString()
 
     if (output.includes('Your database is now in sync') || output.includes('already in sync')) {
-      console.log('✅ Database connected successfully.')
-      console.log('📋 Tables already exist — no changes needed.')
+      console.log('[SUCCESS] Database connected successfully.')
+      console.log('[INFO] Tables already exist — no changes needed.')
     } else if (output.includes('created')) {
-      console.log('✅ Database connected successfully.')
-      console.log('🛠️  Tables created:')
+      console.log('[SUCCESS] Database connected successfully.')
+      console.log('[INIT] Tables created:')
       output.split('\n')
         .filter(l => l.includes('created') || l.includes('Creating'))
-        .forEach(l => console.log(`   → ${l.trim()}`))
+        .forEach(l => console.log(`   > ${l.trim()}`))
     } else if (output.includes('drift') || output.includes('change')) {
-      console.log('✅ Database connected successfully.')
-      console.log('🔄 Tables updated to match current schema.')
+      console.log('[SUCCESS] Database connected successfully.')
+      console.log('[UPDATE] Tables updated to match current schema.')
     } else {
-      console.log('✅ Database connected successfully.')
-      console.log('📋 Schema initialised.')
+      console.log('[SUCCESS] Database connected successfully.')
+      console.log('[INFO] Schema initialised.')
     }
 
-    console.log('\n🌱 Checking default users...')
+    console.log('\n[SEED] Checking default users...')
     await seedUsers(client)
   } catch (error: any) {
     const msg: string = error?.stdout?.toString() || error?.message || String(error)
     if (msg.includes('connect') || msg.includes('ECONNREFUSED') || msg.includes('Access denied')) {
-      console.error('❌ Database connection failed. Check your DATABASE_URL in .env\n')
+      console.error('[ERROR] Database connection failed. Check your DATABASE_URL in .env\n')
     } else {
-      console.error('❌ Database initialisation error:', msg, '\n')
+      console.error('[ERROR] Database initialisation error:', msg, '\n')
     }
   }
 }
