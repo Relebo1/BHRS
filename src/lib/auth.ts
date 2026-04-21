@@ -7,6 +7,7 @@ export interface JWTPayload {
   userId: number
   email: string
   role: string
+  patientId?: number
 }
 
 export const hashPassword = async (password: string): Promise<string> => {

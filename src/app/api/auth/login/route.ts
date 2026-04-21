@@ -6,7 +6,10 @@ export async function POST(request: NextRequest) {
   try {
     const { email, password } = await request.json()
 
-    const user = await prisma.user.findUnique({ where: { email } })
+    const user = await prisma.user.findUnique({
+      where: { email },
+      include: { patient: { select: { id: true } } },
+    })
 
     if (!user || !(await comparePassword(password, user.password))) {
       return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 })
@@ -16,6 +19,7 @@ export async function POST(request: NextRequest) {
       userId: user.id,
       email: user.email,
       role: user.role,
+      patientId: user.patient?.id,
     })
 
     const response = NextResponse.json({

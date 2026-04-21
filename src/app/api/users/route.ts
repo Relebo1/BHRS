@@ -6,19 +6,13 @@ export async function GET(request: NextRequest) {
   try {
     const token = request.cookies.get('token')?.value
     const payload = verifyToken(token || '')
-    
     if (!payload || payload.role !== 'admin') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const users = await prisma.user.findMany({
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        createdAt: true,
-      },
+      where: { role: { in: ['admin', 'nurse'] } },
+      select: { id: true, name: true, email: true, role: true, createdAt: true },
       orderBy: { createdAt: 'desc' },
     })
 
@@ -32,29 +26,19 @@ export async function POST(request: NextRequest) {
   try {
     const token = request.cookies.get('token')?.value
     const payload = verifyToken(token || '')
-    
     if (!payload || payload.role !== 'admin') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const { name, email, password, role } = await request.json()
+    if (!['admin', 'nurse'].includes(role)) {
+      return NextResponse.json({ error: 'Invalid role. Only admin or nurse allowed.' }, { status: 400 })
+    }
 
     const hashedPassword = await hashPassword(password)
-
     const user = await prisma.user.create({
-      data: {
-        name,
-        email,
-        password: hashedPassword,
-        role,
-      },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        createdAt: true,
-      },
+      data: { name, email, password: hashedPassword, role },
+      select: { id: true, name: true, email: true, role: true, createdAt: true },
     })
 
     return NextResponse.json({ user }, { status: 201 })

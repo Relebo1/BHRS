@@ -9,14 +9,19 @@ datasource db {
 }
 
 model User {
-  id             Int             @id @default(autoincrement())
-  name           String
-  email          String          @unique
-  password       String
-  role           String          @default("nurse")
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
-  medicalRecords MedicalRecord[]
+  id               Int            @id @default(autoincrement())
+  name             String
+  email            String         @unique
+  password         String
+  role             String         @default("nurse") // admin | nurse | patient
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  medicalRecords   MedicalRecord[]
+  sentMessages     Message[]      @relation("SentMessages")
+  receivedMessages Message[]      @relation("ReceivedMessages")
+  notifications    Notification[]
+  ratings          Rating[]
+  patient          Patient?       @relation("PatientUser")
 
   @@map("users")
 }
@@ -30,11 +35,14 @@ model Patient {
   dateOfBirth    DateTime        @map("date_of_birth")
   phone          String
   address        String          @db.Text
+  userId         Int?            @unique @map("user_id")
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
   medicalRecords MedicalRecord[]
   appointments   Appointment[]
+  user           User?           @relation("PatientUser", fields: [userId], references: [id])
 
+  @@index([userId])
   @@map("patients")
 }
 
@@ -45,14 +53,14 @@ model MedicalRecord {
   treatment    String   @db.Text
   prescription String   @db.Text
   visitDate    DateTime @map("visit_date")
-  doctorId     Int      @map("doctor_id")
+  nurseId      Int      @map("nurse_id")
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   patient      Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
-  doctor       User     @relation(fields: [doctorId], references: [id])
+  nurse        User     @relation(fields: [nurseId], references: [id])
 
   @@index([patientId])
-  @@index([doctorId])
+  @@index([nurseId])
   @@map("medical_records")
 }
 
@@ -60,7 +68,7 @@ model Appointment {
   id              Int      @id @default(autoincrement())
   patientId       Int      @map("patient_id")
   appointmentDate DateTime @map("appointment_date")
-  status          String   @default("scheduled")
+  status          String   @default("scheduled") // scheduled | completed | cancelled
   notes           String?  @db.Text
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -68,4 +76,45 @@ model Appointment {
 
   @@index([patientId])
   @@map("appointments")
+}
+
+model Message {
+  id         Int      @id @default(autoincrement())
+  senderId   Int      @map("sender_id")
+  receiverId Int      @map("receiver_id")
+  content    String   @db.Text
+  read       Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  sender     User     @relation("SentMessages", fields: [senderId], references: [id])
+  receiver   User     @relation("ReceivedMessages", fields: [receiverId], references: [id])
+
+  @@index([senderId])
+  @@index([receiverId])
+  @@map("messages")
+}
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  title     String
+  message   String   @db.Text
+  type      String   @default("info") // info | appointment | message | alert
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("notifications")
+}
+
+model Rating {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  score     Int      // 1-5
+  comment   String?  @db.Text
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@map("ratings")
 }

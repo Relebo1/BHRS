@@ -5,7 +5,8 @@ import { verifyToken } from '@/lib/auth'
 export async function GET(request: NextRequest) {
   try {
     const token = request.cookies.get('token')?.value
-    if (!token || !verifyToken(token)) {
+    const payload = verifyToken(token || '')
+    if (!payload || payload.role === 'patient') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -16,7 +17,7 @@ export async function GET(request: NextRequest) {
       where: patientId ? { patientId: parseInt(patientId) } : undefined,
       include: {
         patient: true,
-        doctor: { select: { id: true, name: true } },
+        nurse: { select: { id: true, name: true } },
       },
       orderBy: { visitDate: 'desc' },
     })
@@ -31,8 +32,7 @@ export async function POST(request: NextRequest) {
   try {
     const token = request.cookies.get('token')?.value
     const payload = verifyToken(token || '')
-
-    if (!payload) {
+    if (!payload || payload.role === 'patient') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
         treatment,
         prescription: prescription || '',
         visitDate: new Date(visitDate),
-        doctorId: payload.userId,
+        nurseId: payload.userId,
       },
     })
 

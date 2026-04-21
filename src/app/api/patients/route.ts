@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { verifyToken } from '@/lib/auth'
+import { verifyToken, hashPassword } from '@/lib/auth'
 
 export async function GET(request: NextRequest) {
   try {
     const token = request.cookies.get('token')?.value
-    if (!token || !verifyToken(token)) {
+    const payload = verifyToken(token || '')
+    if (!payload || payload.role === 'patient') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -20,6 +21,7 @@ export async function GET(request: NextRequest) {
           { studentId: { contains: search } },
         ],
       } : undefined,
+      include: { user: { select: { email: true } } },
       orderBy: { createdAt: 'desc' },
     })
 
@@ -32,20 +34,42 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const token = request.cookies.get('token')?.value
-    if (!token || !verifyToken(token)) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const payload = verifyToken(token || '')
+    if (!payload || payload.role !== 'admin') {
+      return NextResponse.json({ error: 'Only admins can add patients' }, { status: 403 })
     }
 
-    const { studentId, firstName, lastName, gender, dateOfBirth, phone, address } = await request.json()
+    const { studentId, firstName, lastName, gender, dateOfBirth, phone, address, email, password } = await request.json()
 
-    const patient = await prisma.patient.create({
-      data: { studentId, firstName, lastName, gender, dateOfBirth: new Date(dateOfBirth), phone, address },
+    // Create user account for patient
+    const hashedPassword = await hashPassword(password || studentId) // default password = studentId
+    const user = await prisma.user.create({
+      data: { name: `${firstName} ${lastName}`, email, password: hashedPassword, role: 'patient' },
     })
 
-    return NextResponse.json({ patient }, { status: 201 })
+    const patient = await prisma.patient.create({
+      data: {
+        studentId, firstName, lastName, gender,
+        dateOfBirth: new Date(dateOfBirth),
+        phone, address, userId: user.id,
+      },
+    })
+
+    // Notify all nurses
+    const nurses = await prisma.user.findMany({ where: { role: 'nurse' }, select: { id: true } })
+    await prisma.notification.createMany({
+      data: nurses.map(n => ({
+        userId: n.id,
+        title: 'New Patient Registered',
+        message: `${firstName} ${lastName} (${studentId}) has been added to the system.`,
+        type: 'patient',
+      })),
+    })
+
+    return NextResponse.json({ patient, userEmail: email }, { status: 201 })
   } catch (error: any) {
     if (error.code === 'P2002') {
-      return NextResponse.json({ error: 'Student ID already exists' }, { status: 400 })
+      return NextResponse.json({ error: 'Student ID or email already exists' }, { status: 400 })
     }
     return NextResponse.json({ error: 'Failed to create patient' }, { status: 500 })
   }

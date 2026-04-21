@@ -74,7 +74,7 @@ export default function DashboardPage() {
   return (
     <DashboardLayout title="Dashboard" userName={user?.name} userRole={user?.role}>
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome back, {user?.name}! 👋</h1>
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome back, {user?.name}!</h1>
         <p className="text-gray-600 text-lg">Here's an overview of the clinic's activity.</p>
       </div>
 

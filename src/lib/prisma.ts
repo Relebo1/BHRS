@@ -6,9 +6,8 @@ const globalForPrisma = globalThis as unknown as {
 }
 
 const DEFAULT_USERS = [
-  { name: 'Admin User',     email: 'admin@botho.ac.bw',  password: 'admin123',  role: 'admin'  },
-  { name: 'Dr. John Doe',   email: 'doctor@botho.ac.bw', password: 'doctor123', role: 'doctor' },
-  { name: 'Nurse Jane Doe', email: 'nurse@botho.ac.bw',  password: 'nurse123',  role: 'nurse'  },
+  { name: 'Admin User',     email: 'admin@botho.ac.bw', password: 'admin123', role: 'admin' },
+  { name: 'Nurse Jane Doe', email: 'nurse@botho.ac.bw', password: 'nurse123', role: 'nurse' },
 ]
 
 async function seedUsers(client: PrismaClient) {
