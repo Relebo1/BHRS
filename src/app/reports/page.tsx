@@ -3,11 +3,94 @@
 import { useState, useEffect } from 'react'
 import DashboardLayout from '@/components/DashboardLayout'
 import { useAuth } from '@/hooks/useAuth'
+import * as XLSX from 'xlsx'
 
 export default function ReportsPage() {
   const { user, loading: authLoading } = useAuth()
   const [reportData, setReportData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+
+  const exportPDF = async () => {
+    const { jsPDF } = await import('jspdf')
+    const autoTable = (await import('jspdf-autotable')).default
+    const doc = new jsPDF()
+
+    doc.setFontSize(18)
+    doc.text('Botho University Clinic - Report', 14, 20)
+    doc.setFontSize(11)
+    doc.text(`Generated: ${new Date().toLocaleDateString()}`, 14, 28)
+
+    doc.setFontSize(14)
+    doc.text('Overview Statistics', 14, 40)
+    autoTable(doc, {
+      startY: 45,
+      head: [['Metric', 'Value']],
+      body: [
+        ['Total Patients', reportData?.overview?.totalPatients || 0],
+        ['Total Appointments', reportData?.overview?.totalAppointments || 0],
+        ['Medical Records', reportData?.overview?.totalRecords || 0],
+        ['Patients This Month', reportData?.overview?.patientsThisMonth || 0],
+        ['Appointments This Month', reportData?.overview?.appointmentsThisMonth || 0],
+      ],
+    })
+
+    doc.text('Demographics', 14, (doc as any).lastAutoTable.finalY + 10)
+    autoTable(doc, {
+      startY: (doc as any).lastAutoTable.finalY + 15,
+      head: [['Gender', 'Count']],
+      body: [
+        ['Male', reportData?.demographics?.male || 0],
+        ['Female', reportData?.demographics?.female || 0],
+      ],
+    })
+
+    doc.text('Appointment Status', 14, (doc as any).lastAutoTable.finalY + 10)
+    autoTable(doc, {
+      startY: (doc as any).lastAutoTable.finalY + 15,
+      head: [['Status', 'Count']],
+      body: [
+        ['Scheduled', reportData?.appointments?.scheduled || 0],
+        ['Completed', reportData?.appointments?.completed || 0],
+        ['Cancelled', reportData?.appointments?.cancelled || 0],
+      ],
+    })
+
+    doc.save(`BHRS-Report-${new Date().toISOString().split('T')[0]}.pdf`)
+  }
+
+  const exportExcel = () => {
+    const wb = XLSX.utils.book_new()
+
+    const overviewData = [
+      ['Metric', 'Value'],
+      ['Total Patients', reportData?.overview?.totalPatients || 0],
+      ['Total Appointments', reportData?.overview?.totalAppointments || 0],
+      ['Medical Records', reportData?.overview?.totalRecords || 0],
+      ['Patients This Month', reportData?.overview?.patientsThisMonth || 0],
+      ['Appointments This Month', reportData?.overview?.appointmentsThisMonth || 0],
+    ]
+    const ws1 = XLSX.utils.aoa_to_sheet(overviewData)
+    XLSX.utils.book_append_sheet(wb, ws1, 'Overview')
+
+    const demographicsData = [
+      ['Gender', 'Count'],
+      ['Male', reportData?.demographics?.male || 0],
+      ['Female', reportData?.demographics?.female || 0],
+    ]
+    const ws2 = XLSX.utils.aoa_to_sheet(demographicsData)
+    XLSX.utils.book_append_sheet(wb, ws2, 'Demographics')
+
+    const appointmentsData = [
+      ['Status', 'Count'],
+      ['Scheduled', reportData?.appointments?.scheduled || 0],
+      ['Completed', reportData?.appointments?.completed || 0],
+      ['Cancelled', reportData?.appointments?.cancelled || 0],
+    ]
+    const ws3 = XLSX.utils.aoa_to_sheet(appointmentsData)
+    XLSX.utils.book_append_sheet(wb, ws3, 'Appointments')
+
+    XLSX.writeFile(wb, `BHRS-Report-${new Date().toISOString().split('T')[0]}.xlsx`)
+  }
 
   useEffect(() => {
     if (!user) return
@@ -179,16 +262,12 @@ export default function ReportsPage() {
 
       {/* Export Options */}
       <div className="mt-8 flex gap-4">
-        <button className="btn btn-primary">
-          <svg className="w-5 h-5 inline mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-          </svg>
+        <button onClick={exportPDF} className="btn btn-primary flex items-center gap-2">
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
           Export PDF
         </button>
-        <button className="btn btn-secondary">
-          <svg className="w-5 h-5 inline mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-          </svg>
+        <button onClick={exportExcel} className="btn btn-secondary flex items-center gap-2">
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
           Export Excel
         </button>
       </div>
