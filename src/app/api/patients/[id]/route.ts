@@ -12,7 +12,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     const patient = await prisma.patient.findUnique({
       where: { id: parseInt(params.id) },
       include: {
-        medicalRecords: { include: { doctor: true } },
+        medicalRecords: { include: { nurse: true } },
         appointments: true,
       },
     })

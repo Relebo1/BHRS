@@ -17,7 +17,6 @@ export async function POST(request: NextRequest) {
 
   const users = [
     { name: 'Admin User', email: 'admin@botho.ac.bw', password: 'admin123', role: 'admin' },
-    { name: 'Dr. Relebohile Sekutlu', email: 'doctor@botho.ac.bw', password: 'doctor123', role: 'doctor' },
     { name: 'Nurse Palesa Mokoena', email: 'nurse@botho.ac.bw', password: 'nurse123', role: 'nurse' },
   ]
 

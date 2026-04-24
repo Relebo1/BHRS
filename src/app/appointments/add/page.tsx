@@ -107,7 +107,7 @@ export default function AddAppointmentPage() {
           <ul className="space-y-2 text-sm text-gray-700">
             <li>• Select the correct patient</li>
             <li>• Set the exact date and time</li>
-            <li>• Add notes for the attending doctor</li>
+            <li>• Add notes for the attending nurse</li>
           </ul>
         </div>
       </div>

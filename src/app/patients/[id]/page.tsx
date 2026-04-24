@@ -130,7 +130,7 @@ export default function PatientProfilePage() {
                     </div>
                     <p className="text-sm text-gray-600"><span className="font-medium">Treatment:</span> {record.treatment}</p>
                     <p className="text-sm text-gray-600"><span className="font-medium">Prescription:</span> {record.prescription}</p>
-                    <p className="text-sm text-gray-500 mt-1">Dr. {record.doctor?.name}</p>
+                    <p className="text-sm text-gray-500 mt-1">Nurse: {record.nurse?.name}</p>
                   </div>
                 ))}
               </div>

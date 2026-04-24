@@ -40,7 +40,7 @@ export default function MedicalRecordsPage() {
       )
     },
     { key: 'diagnosis', label: 'Diagnosis' },
-    { key: 'doctor', label: 'Doctor', render: (_: any, row: any) => row.doctor?.name || '—' },
+    { key: 'nurse', label: 'Nurse', render: (_: any, row: any) => row.nurse?.name || '—' },
     {
       key: 'actions', label: 'Actions',
       render: (_: any, row: any) => (
@@ -112,8 +112,8 @@ export default function MedicalRecordsPage() {
                   <p className="text-gray-900">{selected.prescription}</p>
                 </div>
                 <div className="border-t pt-4">
-                  <p className="text-sm font-medium text-gray-600">Doctor</p>
-                  <p className="text-gray-900">{selected.doctor?.name}</p>
+                  <p className="text-sm font-medium text-gray-600">Nurse</p>
+                  <p className="text-gray-900">{selected.nurse?.name}</p>
                 </div>
               </div>
             </div>
