@@ -48,9 +48,11 @@ export default function PatientsPage() {
       <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 mb-1">Patient Management</h1>
-          <p className="text-gray-600">Register and manage clinic patients</p>
+          <p className="text-gray-600">{user?.role === 'admin' ? 'Register and manage clinic patients' : 'View clinic patients'}</p>
         </div>
-        <Link href="/patients/add" className="btn btn-primary w-fit">+ Add New Patient</Link>
+        {user?.role === 'admin' && (
+          <Link href="/patients/add" className="btn btn-primary w-fit">+ Add New Patient</Link>
+        )}
       </div>
 
       <div className="card mb-6 flex flex-col md:flex-row gap-4">
