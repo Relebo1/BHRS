@@ -119,7 +119,7 @@ export default function LoginPage() {
           <div className="space-y-1 text-xs text-gray-600">
             <p><span className="font-medium text-gray-800">Admin:</span> admin@botho.ac.bw / admin123</p>
             <p><span className="font-medium text-gray-800">Nurse:</span> nurse@botho.ac.bw / nurse123</p>
-            <p><span className="font-medium text-gray-800">Patient:</span> use registered email / studentId</p>
+            <p><span className="font-medium text-gray-800">Patient:</span> registered email / studentId</p>
           </div>
         </div>
 
