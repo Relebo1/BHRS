@@ -20,6 +20,8 @@ function AddMedicalRecordForm() {
     treatment: '',
     prescription: '',
     visitDate: new Date().toISOString().split('T')[0],
+    appointmentId: searchParams.get('appointmentId') || '',
+    isWalkIn: searchParams.get('walkIn') === '1',
   })
 
   useEffect(() => {
@@ -35,7 +37,11 @@ function AddMedicalRecordForm() {
     const res = await fetch('/api/medical-records', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...form, patientId: Number(form.patientId) }),
+      body: JSON.stringify({
+        ...form,
+        patientId: Number(form.patientId),
+        appointmentId: form.appointmentId ? Number(form.appointmentId) : null,
+      }),
     })
 
     const data = await res.json()
@@ -55,6 +61,16 @@ function AddMedicalRecordForm() {
         </Link>
         <h1 className="text-2xl font-bold text-gray-900 mb-1">Add Medical Record</h1>
         <p className="text-gray-600">Record a new patient visit</p>
+        {form.isWalkIn && (
+          <span className="inline-flex items-center gap-1 mt-2 px-3 py-1 bg-orange-100 text-orange-700 border border-orange-200 rounded-full text-sm font-medium">
+            Walk-in Visit
+          </span>
+        )}
+        {form.appointmentId && !form.isWalkIn && (
+          <span className="inline-flex items-center gap-1 mt-2 px-3 py-1 bg-blue-100 text-blue-700 border border-blue-200 rounded-full text-sm font-medium">
+            Linked to Appointment #{form.appointmentId}
+          </span>
+        )}
       </div>
 
       {error && <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">{error}</div>}

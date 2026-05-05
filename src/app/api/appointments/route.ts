@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
     if (!payload) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const body = await request.json()
-    let { patientId, appointmentDate, notes } = body
+    let { patientId, appointmentDate, notes, isWalkIn } = body
 
     // Patients book for themselves
     if (payload.role === 'patient') {
@@ -44,39 +44,48 @@ export async function POST(request: NextRequest) {
       patientId = payload.patientId
     }
 
-    // Check slot not already taken
-    const slotDate = new Date(appointmentDate)
-    const slotStart = new Date(slotDate)
-    slotStart.setMinutes(0, 0, 0)
-    const slotEnd = new Date(slotStart)
-    slotEnd.setHours(slotStart.getHours() + 1)
+    // Walk-ins use current time; skip slot conflict check
+    let slotDate: Date
+    if (isWalkIn) {
+      slotDate = new Date()
+    } else {
+      slotDate = new Date(appointmentDate)
+      const slotStart = new Date(slotDate)
+      slotStart.setMinutes(0, 0, 0)
+      const slotEnd = new Date(slotStart)
+      slotEnd.setHours(slotStart.getHours() + 1)
 
-    const conflict = await prisma.appointment.findFirst({
-      where: {
-        appointmentDate: { gte: slotStart, lt: slotEnd },
-        status: { not: 'cancelled' },
-      },
-    })
-
-    if (conflict) return NextResponse.json({ error: 'This time slot is already booked' }, { status: 409 })
+      const conflict = await prisma.appointment.findFirst({
+        where: {
+          appointmentDate: { gte: slotStart, lt: slotEnd },
+          status: { not: 'cancelled' },
+        },
+      })
+      if (conflict) return NextResponse.json({ error: 'This time slot is already booked' }, { status: 409 })
+    }
 
     const appointment = await prisma.appointment.create({
       data: {
         patientId: parseInt(patientId),
         appointmentDate: slotDate,
-        status: 'scheduled',
+        status: isWalkIn ? 'completed' : 'scheduled',
         notes: notes || null,
+        isWalkIn: !!isWalkIn,
       },
       include: { patient: true },
     })
 
     // Notify nurses
     const nurses = await prisma.user.findMany({ where: { role: 'nurse' }, select: { id: true } })
+    const notifTitle = isWalkIn ? 'Walk-in Patient' : 'New Appointment'
+    const notifMsg = isWalkIn
+      ? `${appointment.patient.firstName} ${appointment.patient.lastName} walked in — please attend.`
+      : `${appointment.patient.firstName} ${appointment.patient.lastName} booked an appointment on ${slotDate.toLocaleDateString()}.`
     await prisma.notification.createMany({
       data: nurses.map(n => ({
         userId: n.id,
-        title: 'New Appointment',
-        message: `${appointment.patient.firstName} ${appointment.patient.lastName} booked an appointment on ${slotDate.toLocaleDateString()}.`,
+        title: notifTitle,
+        message: notifMsg,
         type: 'appointment',
       })),
     })

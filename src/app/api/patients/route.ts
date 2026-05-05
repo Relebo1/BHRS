@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
         userId: n.id,
         title: 'New Patient Registered',
         message: `${firstName} ${lastName} (${studentId}) has been added to the system.`,
-        type: 'patient',
+        type: 'info',
       })),
     })
 

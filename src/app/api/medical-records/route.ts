@@ -18,6 +18,7 @@ export async function GET(request: NextRequest) {
       include: {
         patient: true,
         nurse: { select: { id: true, name: true } },
+        appointment: { select: { id: true, appointmentDate: true, isWalkIn: true } },
       },
       orderBy: { visitDate: 'desc' },
     })
@@ -36,7 +37,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { patientId, diagnosis, treatment, prescription, visitDate } = await request.json()
+    const { patientId, diagnosis, treatment, prescription, visitDate, appointmentId, isWalkIn } = await request.json()
 
     const record = await prisma.medicalRecord.create({
       data: {
@@ -46,11 +47,22 @@ export async function POST(request: NextRequest) {
         prescription: prescription || '',
         visitDate: new Date(visitDate),
         nurseId: payload.userId,
+        isWalkIn: !!isWalkIn,
+        appointmentId: appointmentId ? parseInt(appointmentId) : null,
       },
     })
 
+    // Mark linked appointment as completed
+    if (appointmentId) {
+      await prisma.appointment.update({
+        where: { id: parseInt(appointmentId) },
+        data: { status: 'completed' },
+      })
+    }
+
     return NextResponse.json({ record }, { status: 201 })
-  } catch (error) {
-    return NextResponse.json({ error: 'Failed to create medical record' }, { status: 500 })
+  } catch (error: any) {
+    console.error('[medical-records POST]', error?.message ?? error)
+    return NextResponse.json({ error: error?.message || 'Failed to create medical record' }, { status: 500 })
   }
 }

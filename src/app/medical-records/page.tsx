@@ -40,6 +40,14 @@ export default function MedicalRecordsPage() {
       )
     },
     { key: 'diagnosis', label: 'Diagnosis' },
+    {
+      key: 'type', label: 'Type',
+      render: (_: any, row: any) => row.isWalkIn
+        ? <span className="badge bg-orange-100 text-orange-700 border border-orange-200">Walk-in</span>
+        : row.appointment
+          ? <span className="badge badge-info">Appointment</span>
+          : <span className="badge bg-gray-100 text-gray-600">Direct</span>
+    },
     { key: 'nurse', label: 'Nurse', render: (_: any, row: any) => row.nurse?.name || '—' },
     {
       key: 'actions', label: 'Actions',
@@ -115,6 +123,17 @@ export default function MedicalRecordsPage() {
                   <p className="text-sm font-medium text-gray-600">Nurse</p>
                   <p className="text-gray-900">{selected.nurse?.name}</p>
                 </div>
+                {selected.appointment && (
+                  <div className="border-t pt-4">
+                    <p className="text-sm font-medium text-gray-600">Linked Appointment</p>
+                    <p className="text-gray-900">{new Date(selected.appointment.appointmentDate).toLocaleString()}</p>
+                  </div>
+                )}
+                {selected.isWalkIn && (
+                  <div className="border-t pt-4">
+                    <span className="inline-flex items-center gap-1 px-3 py-1 bg-orange-100 text-orange-700 border border-orange-200 rounded-full text-sm font-medium">Walk-in Visit</span>
+                  </div>
+                )}
               </div>
             </div>
           ) : (

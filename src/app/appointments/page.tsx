@@ -13,6 +13,7 @@ export default function AppointmentsPage() {
   const [statusFilter, setStatusFilter] = useState('all')
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
+  const [isWalkIn, setIsWalkIn] = useState(false)
   const [saving, setSaving] = useState(false)
   const [form, setForm] = useState({ patientId: '', appointmentDate: '', notes: '' })
 
@@ -36,10 +37,11 @@ export default function AppointmentsPage() {
     await fetch('/api/appointments', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...form, patientId: Number(form.patientId) })
+      body: JSON.stringify({ ...form, patientId: Number(form.patientId), isWalkIn })
     })
     setSaving(false)
     setShowModal(false)
+    setIsWalkIn(false)
     setForm({ patientId: '', appointmentDate: '', notes: '' })
     fetchAppointments()
   }
@@ -60,16 +62,26 @@ export default function AppointmentsPage() {
     { key: 'notes', label: 'Notes', render: (v: string) => v || '—' },
     {
       key: 'status', label: 'Status',
-      render: (v: string) => {
-        const colors: any = { scheduled: 'badge-info', completed: 'badge-success', cancelled: 'badge-danger' }
-        return <span className={`badge ${colors[v] || 'badge-info'}`}>{v}</span>
-      }
+      render: (v: string, row: any) => (
+        <div className="flex items-center gap-2">
+          <span className={`badge ${({ scheduled: 'badge-info', completed: 'badge-success', cancelled: 'badge-danger' } as any)[v] || 'badge-info'}`}>{v}</span>
+          {row.isWalkIn && <span className="badge bg-orange-100 text-orange-700 border border-orange-200">Walk-in</span>}
+        </div>
+      )
     },
     {
       key: 'actions', label: 'Actions',
-      render: (_: any, row: any) => row.status === 'scheduled' ? (
-        <button onClick={() => handleCancel(row.id)} className="text-red-500 hover:text-red-600 font-medium text-sm">Cancel</button>
-      ) : null
+      render: (_: any, row: any) => (
+        <div className="flex items-center gap-3">
+          {row.status === 'scheduled' && (
+            <>
+              <a href={`/medical-records/add?patientId=${row.patientId}&appointmentId=${row.id}`}
+                className="text-primary-500 hover:text-primary-600 font-medium text-sm">Add Record</a>
+              <button onClick={() => handleCancel(row.id)} className="text-red-500 hover:text-red-600 font-medium text-sm">Cancel</button>
+            </>
+          )}
+        </div>
+      )
     }
   ]
 
@@ -82,7 +94,10 @@ export default function AppointmentsPage() {
           <h1 className="text-2xl font-bold text-gray-900 mb-1">Appointments</h1>
           <p className="text-gray-600">Schedule and track patient appointments</p>
         </div>
-        <button onClick={() => setShowModal(true)} className="btn btn-primary w-fit">+ Schedule Appointment</button>
+        <div className="flex gap-2">
+          <button onClick={() => { setIsWalkIn(true); setShowModal(true) }} className="btn bg-orange-500 hover:bg-orange-600 text-white w-fit">+ Walk-in</button>
+          <button onClick={() => { setIsWalkIn(false); setShowModal(true) }} className="btn btn-primary w-fit">+ Schedule Appointment</button>
+        </div>
       </div>
 
       <div className="card mb-6 flex gap-2">
@@ -105,10 +120,10 @@ export default function AppointmentsPage() {
         )}
       </div>
 
-      <Modal isOpen={showModal} onClose={() => setShowModal(false)} title="Schedule Appointment"
+      <Modal isOpen={showModal} onClose={() => { setShowModal(false); setIsWalkIn(false) }} title={isWalkIn ? 'Record Walk-in Visit' : 'Schedule Appointment'}
         footer={
           <>
-            <button onClick={() => setShowModal(false)} className="btn btn-secondary">Cancel</button>
+            <button onClick={() => { setShowModal(false); setIsWalkIn(false) }} className="btn btn-secondary">Cancel</button>
             <button onClick={handleSubmit} className="btn btn-primary" disabled={saving}>{saving ? 'Saving...' : 'Schedule'}</button>
           </>
         }
@@ -123,10 +138,17 @@ export default function AppointmentsPage() {
               ))}
             </select>
           </div>
-          <div>
-            <label className="form-label">Date & Time *</label>
-            <input type="datetime-local" value={form.appointmentDate} onChange={e => setForm({ ...form, appointmentDate: e.target.value })} className="form-input" required />
-          </div>
+          {!isWalkIn && (
+            <div>
+              <label className="form-label">Date & Time *</label>
+              <input type="datetime-local" value={form.appointmentDate} onChange={e => setForm({ ...form, appointmentDate: e.target.value })} className="form-input" required />
+            </div>
+          )}
+          {isWalkIn && (
+            <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg text-sm text-orange-700">
+              Walk-in visit will be recorded at the current time.
+            </div>
+          )}
           <div>
             <label className="form-label">Notes</label>
             <textarea value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} className="form-textarea" rows={3} />

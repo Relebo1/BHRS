@@ -48,32 +48,38 @@ model Patient {
 }
 
 model MedicalRecord {
-  id           Int      @id @default(autoincrement())
-  patientId    Int      @map("patient_id")
-  diagnosis    String   @db.Text
-  treatment    String   @db.Text
-  prescription String   @db.Text
-  visitDate    DateTime @map("visit_date")
-  nurseId      Int      @map("nurse_id")
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  patient      Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
-  nurse        User     @relation(fields: [nurseId], references: [id])
+  id            Int          @id @default(autoincrement())
+  patientId     Int          @map("patient_id")
+  diagnosis     String       @db.Text
+  treatment     String       @db.Text
+  prescription  String       @db.Text
+  visitDate     DateTime     @map("visit_date")
+  nurseId       Int          @map("nurse_id")
+  isWalkIn      Boolean      @default(false) @map("is_walk_in")
+  appointmentId Int?         @unique @map("appointment_id")
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  patient       Patient      @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  nurse         User         @relation(fields: [nurseId], references: [id])
+  appointment   Appointment? @relation(fields: [appointmentId], references: [id])
 
   @@index([patientId])
   @@index([nurseId])
+  @@index([appointmentId])
   @@map("medical_records")
 }
 
 model Appointment {
-  id              Int      @id @default(autoincrement())
-  patientId       Int      @map("patient_id")
-  appointmentDate DateTime @map("appointment_date")
-  status          String   @default("scheduled") // scheduled | completed | cancelled
-  notes           String?  @db.Text
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  patient         Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  id              Int            @id @default(autoincrement())
+  patientId       Int            @map("patient_id")
+  appointmentDate DateTime       @map("appointment_date")
+  status          String         @default("scheduled") // scheduled | completed | cancelled
+  notes           String?        @db.Text
+  isWalkIn        Boolean        @default(false) @map("is_walk_in")
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  patient         Patient        @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  medicalRecord   MedicalRecord?
 
   @@index([patientId])
   @@map("appointments")
